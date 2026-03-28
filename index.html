@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0A0A1A">
+<link rel="manifest" href="manifest.webmanifest">
 <title>🎈 Balloon Fight Web</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -176,6 +178,31 @@
   .lb-scroll { max-height: 220px; overflow-y: auto; }
   .lb-scroll::-webkit-scrollbar { width: 4px; }
   .lb-scroll::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* settings rows */
+  .setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 9px; padding: 6px 0; border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .setting-row label { color: var(--grey); white-space: nowrap; }
+  .setting-row input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100px; height: 4px; background: var(--border); outline: none;
+    border-radius: 2px; cursor: pointer;
+  }
+  .setting-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px;
+    background: var(--accent); border-radius: 50%;
+  }
+  .setting-row select {
+    font-family: var(--font); font-size: 8px; background: var(--bg);
+    color: var(--white); border: 2px solid var(--border); padding: 3px 6px;
+    cursor: pointer;
+  }
+  .setting-row input[type=checkbox] {
+    width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -192,6 +219,7 @@
           <li data-action="play" class="active">▶ PLAY</li>
           <li data-action="leaderboard">🏆 LEADERBOARD</li>
           <li data-action="howto">❓ HOW TO PLAY</li>
+          <li data-action="settings">⚙ SETTINGS</li>
         </ul>
         <p style="margin-top:12px">HI: <span id="menu-hi" style="color:var(--accent)">0000000</span></p>
       </div>
@@ -279,6 +307,35 @@
       </div>
     </div>
 
+    <!-- SETTINGS -->
+    <div class="overlay hidden" id="screen-settings">
+      <div class="panel" style="min-width:280px">
+        <h1>⚙ SETTINGS</h1>
+        <div class="setting-row">
+          <label>MUTE SFX</label>
+          <input type="checkbox" id="set-mute">
+        </div>
+        <div class="setting-row">
+          <label>SFX VOLUME</label>
+          <input type="range" id="set-vol" min="0" max="100" value="30">
+        </div>
+        <div class="setting-row">
+          <label>MUSIC</label>
+          <input type="checkbox" id="set-music">
+        </div>
+        <div class="setting-row">
+          <label>VISUAL SCALE</label>
+          <select id="set-scale">
+            <option value="auto">AUTO</option>
+            <option value="1">1×</option>
+            <option value="2">2×</option>
+          </select>
+        </div>
+        <br>
+        <button class="btn primary" id="btn-settings-back">← BACK</button>
+      </div>
+    </div>
+
     <!-- TOUCH CONTROLS -->
     <div id="touch-controls">
       <div class="touch-btn" id="btn-left">◀</div>
@@ -314,31 +371,49 @@ const C = {
 };
 
 // Platform layouts
-const PLATFORMS = [
+const PLATFORMS_CLASSIC = [
   // Classic NES layout (approximate pixel coords at 256x240)
-  {x:0,   y:207, w:64,  h:6, solid:true},   // left ground
-  {x:192, y:207, w:64,  h:6, solid:true},   // right ground
-  {x:64,  y:207, w:128, h:6, solid:false},  // centre ground gap (water below)
-  {x:16,  y:152, w:80,  h:6, solid:false},  // left mid platform
-  {x:160, y:152, w:80,  h:6, solid:false},  // right mid platform
-  {x:80,  y:100, w:96,  h:6, solid:false},  // top mid platform
-  {x:0,   y:50,  w:48,  h:6, solid:false},  // top left platform
-  {x:208, y:50,  w:48,  h:6, solid:false},  // top right platform
+  {x:0,   y:207, w:64,  h:6, solid:true},            // left ground
+  {x:192, y:207, w:64,  h:6, solid:true},            // right ground
+  {x:64,  y:207, w:128, h:6, solid:false},           // centre ground gap (water below)
+  {x:16,  y:152, w:80,  h:6, solid:false},           // left mid platform
+  {x:160, y:152, w:80,  h:6, solid:false},           // right mid platform
+  {x:80,  y:100, w:96,  h:6, solid:false, cloud:true}, // top mid cloud platform
+  {x:0,   y:50,  w:48,  h:6, solid:false},           // top left platform
+  {x:208, y:50,  w:48,  h:6, solid:false},           // top right platform
 ];
+
+const PLATFORMS_SPARSE = [
+  // Sparse layout — narrower platforms, wider gaps; appears in phase 4+
+  {x:0,   y:207, w:64,  h:6, solid:true},            // left ground
+  {x:192, y:207, w:64,  h:6, solid:true},            // right ground
+  {x:64,  y:207, w:128, h:6, solid:false},           // centre ground gap (water below)
+  {x:32,  y:160, w:56,  h:6, solid:false},           // left mid platform (narrower, higher)
+  {x:168, y:160, w:56,  h:6, solid:false},           // right mid platform (narrower, higher)
+  {x:96,  y:96,  w:64,  h:6, solid:false, cloud:true}, // top mid cloud (narrower)
+  {x:0,   y:42,  w:36,  h:6, solid:false},           // top left platform (narrower)
+  {x:220, y:42,  w:36,  h:6, solid:false},           // top right platform (narrower)
+];
+
+let activePlatforms = PLATFORMS_CLASSIC;
 
 // Water zone
 const WATER_Y = 213;
 const WATER_H = 27;
 
-// Enemy spawn configs per phase
+// Enemy spawn configs per phase (layout: 'classic'|'sparse')
 const PHASE_DATA = [
-  {enemies:[{t:'A',x:60,y:80},{t:'A',x:180,y:80}], hatch:3000},
-  {enemies:[{t:'A',x:40,y:60},{t:'A',x:120,y:90},{t:'A',x:200,y:60}], hatch:2500},
-  {enemies:[{t:'A',x:50,y:70},{t:'B',x:180,y:70},{t:'A',x:120,y:40}], hatch:2200},
-  {enemies:[{t:'B',x:40,y:60},{t:'B',x:200,y:60},{t:'A',x:128,y:80},{t:'S',x:80,y:145}], hatch:2000},
-  {enemies:[{t:'B',x:30,y:50},{t:'B',x:220,y:50},{t:'B',x:128,y:30},{t:'S',x:160,y:145}], hatch:1800},
-  {enemies:[{t:'B',x:40,y:60},{t:'B',x:90,y:40},{t:'B',x:160,y:40},{t:'B',x:210,y:60},{t:'S',x:40,y:145},{t:'S',x:180,y:145}], hatch:1600},
+  {layout:'classic', enemies:[{t:'A',x:60,y:80},{t:'A',x:180,y:80}], hatch:3000},
+  {layout:'classic', enemies:[{t:'A',x:40,y:60},{t:'A',x:120,y:90},{t:'A',x:200,y:60}], hatch:2500},
+  {layout:'classic', enemies:[{t:'A',x:50,y:70},{t:'B',x:180,y:70},{t:'A',x:120,y:40}], hatch:2200},
+  {layout:'sparse',  enemies:[{t:'B',x:40,y:60},{t:'B',x:200,y:60},{t:'A',x:128,y:80},{t:'S',x:80,y:153}], hatch:2000},
+  {layout:'sparse',  enemies:[{t:'B',x:30,y:50},{t:'B',x:220,y:50},{t:'B',x:128,y:30},{t:'S',x:160,y:153}], hatch:1800},
+  {layout:'sparse',  enemies:[{t:'B',x:40,y:60},{t:'B',x:90,y:40},{t:'B',x:160,y:40},{t:'B',x:210,y:60},{t:'S',x:40,y:153},{t:'S',x:180,y:153}], hatch:1600},
 ];
+
+function applyPhaseLayout(pd) {
+  activePlatforms = (pd.layout === 'sparse') ? PLATFORMS_SPARSE : PLATFORMS_CLASSIC;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // CANVAS SETUP
@@ -349,7 +424,10 @@ const wrap = document.getElementById('canvas-wrap');
 
 function resize() {
   const vw = window.innerWidth, vh = window.innerHeight;
-  const scale = Math.max(1, Math.min(Math.floor(vw / W), Math.floor(vh / H)));
+  const autoScale = Math.max(1, Math.min(Math.floor(vw / W), Math.floor(vh / H)));
+  const scale = visualScale === '1' ? 1
+              : visualScale === '2' ? Math.min(2, autoScale)
+              : autoScale;
   canvas.width = W; canvas.height = H;
   canvas.style.width  = (W * scale) + 'px';
   canvas.style.height = (H * scale) + 'px';
@@ -383,11 +461,36 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 function clearJustPressed() { for (const k in justPressed) delete justPressed[k]; }
+
+// ─── Gamepad ──────────────────────────────────────────────────
+const gamepad = { left: false, right: false, flap: false };
+let gpPrevPause = false;
+const gpToast = { text: '', timer: 0 };
+
+window.addEventListener('gamepadconnected',    e => { gpToast.text = `🎮 ${e.gamepad.id.slice(0,20)} CONNECTED`;    gpToast.timer = 180; });
+window.addEventListener('gamepaddisconnected', e => { gpToast.text = `🎮 CONTROLLER DISCONNECTED`; gpToast.timer = 180; });
+
+function pollGamepad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let gp = null;
+  for (const p of pads) { if (p && p.connected) { gp = p; break; } }
+  if (!gp) { gamepad.left = gamepad.right = gamepad.flap = false; gpPrevPause = false; return; }
+
+  const lx = gp.axes[0] ?? 0;
+  gamepad.left  = !!(gp.buttons[14]?.pressed) || lx < -0.3;
+  gamepad.right = !!(gp.buttons[15]?.pressed) || lx > 0.3;
+  gamepad.flap  = !!(gp.buttons[0]?.pressed);
+
+  const pauseNow = !!(gp.buttons[9]?.pressed);
+  if (pauseNow && !gpPrevPause) justPressed['GP_PAUSE'] = true;
+  gpPrevPause = pauseNow;
+}
+
 function isDown(a) {
-  if (a === 'LEFT')    return keys['ArrowLeft']  || keys['KeyA'] || touch.left;
-  if (a === 'RIGHT')   return keys['ArrowRight'] || keys['KeyD'] || touch.right;
-  if (a === 'FLAP')    return keys['KeyZ'] || keys['Space'] || touch.flap;
-  if (a === 'PAUSE')   return justPressed['KeyP'] || justPressed['Escape'];
+  if (a === 'LEFT')    return keys['ArrowLeft']  || keys['KeyA'] || touch.left  || gamepad.left;
+  if (a === 'RIGHT')   return keys['ArrowRight'] || keys['KeyD'] || touch.right || gamepad.right;
+  if (a === 'FLAP')    return keys['KeyZ'] || keys['Space'] || touch.flap || gamepad.flap;
+  if (a === 'PAUSE')   return justPressed['KeyP'] || justPressed['Escape'] || justPressed['GP_PAUSE'];
   if (a === 'CONFIRM') return justPressed['Enter'];
   if (a === 'MUTE')    return justPressed['KeyM'];
   return false;
@@ -395,45 +498,154 @@ function isDown(a) {
 
 // Touch state
 const touch = {left:false, right:false, flap:false};
+const TOUCH_BTN_MAP = {'btn-left':'left', 'btn-right':'right', 'btn-flap':'flap'};
+
+function updateTouchFromEvent(e) {
+  touch.left = touch.right = touch.flap = false;
+  for (const t of e.touches) {
+    // Walk up the DOM from the touched element to find a mapped button id
+    let el = document.elementFromPoint(t.clientX, t.clientY);
+    while (el && el !== document.body) {
+      if (TOUCH_BTN_MAP[el.id]) { touch[TOUCH_BTN_MAP[el.id]] = true; break; }
+      el = el.parentElement;
+    }
+  }
+  // Sync visual pressed state
+  for (const [id, prop] of Object.entries(TOUCH_BTN_MAP)) {
+    document.getElementById(id).classList.toggle('pressed', touch[prop]);
+  }
+}
+
 function setupTouch() {
   if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return;
-  document.getElementById('touch-controls').style.display = 'block';
-  const mkBtn = (id, prop) => {
-    const el = document.getElementById(id);
-    el.addEventListener('touchstart', e => { e.preventDefault(); initAudio(); touch[prop]=true; el.classList.add('pressed'); }, {passive:false});
-    el.addEventListener('touchend',   e => { e.preventDefault(); touch[prop]=false; el.classList.remove('pressed'); }, {passive:false});
-    el.addEventListener('touchcancel',e => { touch[prop]=false; el.classList.remove('pressed'); });
-  };
-  mkBtn('btn-left',  'left');
-  mkBtn('btn-right', 'right');
-  mkBtn('btn-flap',  'flap');
+  const tc = document.getElementById('touch-controls');
+  tc.style.display = 'block';
+  const opts = {passive: false};
+  tc.addEventListener('touchstart',  e => { e.preventDefault(); initAudio(); updateTouchFromEvent(e); }, opts);
+  tc.addEventListener('touchmove',   e => { e.preventDefault(); updateTouchFromEvent(e); }, opts);
+  tc.addEventListener('touchend',    e => { e.preventDefault(); updateTouchFromEvent(e); }, opts);
+  tc.addEventListener('touchcancel', e => { touch.left=touch.right=touch.flap=false; updateTouchFromEvent(e); });
 }
 setupTouch();
 document.addEventListener('click', initAudio, {once: true});
 document.addEventListener('touchstart', initAudio, {once: true, passive: true});
 
 // ═══════════════════════════════════════════════════════════════
+// SETTINGS STATE
+// ═══════════════════════════════════════════════════════════════
+let muted        = localStorage.getItem('bfw_muted')   === '1';
+let sfxVol       = parseFloat(localStorage.getItem('bfw_sfxvol') ?? '0.3');
+let musicEnabled = localStorage.getItem('bfw_music')   === '1';
+let visualScale  = localStorage.getItem('bfw_scale')   || 'auto';
+
+function saveSettings() {
+  localStorage.setItem('bfw_muted',   muted        ? '1'  : '0');
+  localStorage.setItem('bfw_sfxvol',  sfxVol.toString());
+  localStorage.setItem('bfw_music',   musicEnabled ? '1'  : '0');
+  localStorage.setItem('bfw_scale',   visualScale);
+}
+
+function openSettings() {
+  state = 'settings';
+  document.getElementById('set-mute').checked  = muted;
+  document.getElementById('set-vol').value      = Math.round(sfxVol * 100);
+  document.getElementById('set-music').checked  = musicEnabled;
+  document.getElementById('set-scale').value    = visualScale;
+  showOnly('screen-settings');
+}
+
+function closeSettings() {
+  state = 'menu';
+  showOnly('screen-menu');
+  document.getElementById('menu-hi').textContent = fmtScore(hiScore);
+}
+
+document.getElementById('set-mute').addEventListener('change', e => {
+  muted = e.target.checked;
+  if (masterGain) masterGain.gain.value = muted ? 0 : sfxVol;
+  saveSettings();
+});
+document.getElementById('set-vol').addEventListener('input', e => {
+  sfxVol = e.target.value / 100;
+  if (masterGain && !muted) masterGain.gain.value = sfxVol;
+  saveSettings();
+});
+document.getElementById('set-music').addEventListener('change', e => {
+  musicEnabled = e.target.checked;
+  saveSettings();
+  if (musicEnabled && state === 'game') startMusic();
+  else stopMusic();
+});
+document.getElementById('set-scale').addEventListener('change', e => {
+  visualScale = e.target.value;
+  saveSettings();
+  resize();
+});
+document.getElementById('btn-settings-back').addEventListener('click', closeSettings);
+
+// ═══════════════════════════════════════════════════════════════
 // AUDIO (Web Audio synthesis)
 // ═══════════════════════════════════════════════════════════════
 let audioCtx = null;
-let muted = localStorage.getItem('bfw_muted') === '1';
+let masterGain = null;
 
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = muted ? 0 : sfxVol;
+  masterGain.connect(audioCtx.destination);
 }
 
 function playTone(freq, type, duration, vol=0.3, decay=true) {
-  if (muted || !audioCtx) return;
+  if (!audioCtx) return;
   try {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.connect(gain); gain.connect(masterGain);
     osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
     gain.gain.setValueAtTime(vol, audioCtx.currentTime);
     if (decay) gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     osc.start(); osc.stop(audioCtx.currentTime + duration);
   } catch(e){}
+}
+
+// ─── Background music ─────────────────────────────────────────
+// Simple 8-note arpeggio loop (C major pentatonic); off by default
+const MUSIC_SEQ  = [523,659,784,1047,784,659,523,392]; // C5-E5-G5-C6-G5-E5-C5-G4
+const MUSIC_BPM  = 150;
+let musicPlaying = false;
+let musicTimeout = null;
+let musicNoteIdx = 0;
+
+function startMusic() {
+  if (!audioCtx || musicPlaying) return;
+  musicPlaying = true;
+  musicNoteIdx = 0;
+  scheduleMusicNote();
+}
+function stopMusic() {
+  musicPlaying = false;
+  if (musicTimeout) { clearTimeout(musicTimeout); musicTimeout = null; }
+}
+function scheduleMusicNote() {
+  if (!musicPlaying || !audioCtx) return;
+  const beatMs = 60000 / MUSIC_BPM;
+  const freq   = MUSIC_SEQ[musicNoteIdx % MUSIC_SEQ.length];
+  try {
+    const osc  = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type   = 'square';
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    gain.connect(masterGain);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (beatMs * 0.75) / 1000);
+    osc.start();
+    osc.stop(audioCtx.currentTime + (beatMs * 0.75) / 1000);
+  } catch(e) {}
+  musicNoteIdx++;
+  musicTimeout = setTimeout(scheduleMusicNote, beatMs);
 }
 
 const SFX = {
@@ -547,7 +759,7 @@ function aabb(ax,ay,aw,ah, bx,by,bw,bh) {
 // Resolve entity vs platforms (top-only landing)
 function resolvePlatforms(ent, w, h) {
   ent.onGround = false;
-  for (const p of PLATFORMS) {
+  for (const p of activePlatforms) {
     if (!aabb(ent.x - w/2, ent.y - h, w, h, p.x, p.y, p.w, p.h)) continue;
     // Landing from above
     if (ent.vy >= 0) {
@@ -634,7 +846,7 @@ function updatePlayer() {
 function resolvePlatformsEnt(ent, hw, hh) {
   ent.onGround = false;
   const ex = ent.x - hw/2, ey = ent.y - hh;
-  for (const p of PLATFORMS) {
+  for (const p of activePlatforms) {
     if (ey + hh < p.y || ey > p.y + p.h) continue;
     if (ex + hw < p.x || ex > p.x + p.w) continue;
     // Landing from above
@@ -663,7 +875,7 @@ function updateEnemies() {
       e.x += e.vx * speedMult;
       // Find platform it's on
       e.onGround = false;
-      for (const p of PLATFORMS) {
+      for (const p of activePlatforms) {
         if (Math.abs(e.y - p.y) < 2 && e.x >= p.x && e.x <= p.x + p.w) {
           e.onGround = true;
           if (e.x <= p.x + 4 || e.x >= p.x + p.w - 4) e.vx *= -1;
@@ -860,8 +1072,8 @@ function nextPhase() {
   popChain = 0;
   phaseAnnounce = 120;
   const pd = PHASE_DATA[Math.min(phase-1, PHASE_DATA.length-1)];
+  applyPhaseLayout(pd);
   pd.enemies.forEach(e => spawnEnemy(e.t, e.x, e.y));
-  // reset fish
   fishState.forEach(f => { f.state='idle'; f.timer=0; f.y=WATER_Y; });
 }
 
@@ -917,14 +1129,12 @@ function updateBonus(delta) {
 // ═══════════════════════════════════════════════════════════════
 // SCENE MANAGEMENT
 // ═══════════════════════════════════════════════════════════════
+const ALL_SCREENS = ['screen-menu','screen-pause','screen-gameover','screen-lb','screen-howto','screen-settings'];
 function showOnly(id) {
-  ['screen-menu','screen-pause','screen-gameover','screen-lb','screen-howto'].forEach(s => {
-    document.getElementById(s).classList.toggle('hidden', s !== id);
-  });
+  ALL_SCREENS.forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
 }
 function hideAll() {
-  ['screen-menu','screen-pause','screen-gameover','screen-lb','screen-howto'].forEach(s =>
-    document.getElementById(s).classList.add('hidden'));
+  ALL_SCREENS.forEach(s => document.getElementById(s).classList.add('hidden'));
 }
 
 function startGame() {
@@ -936,13 +1146,16 @@ function startGame() {
   respawnPlayer();
   player.state = 'alive';
   const pd = PHASE_DATA[0];
+  applyPhaseLayout(pd);
   pd.enemies.forEach(e => spawnEnemy(e.t, e.x, e.y));
   phaseAnnounce = 90;
   state = 'game';
+  if (musicEnabled) startMusic();
 }
 
 function enterPause() {
   state = 'pause';
+  stopMusic();
   showOnly('screen-pause');
   menuIdx = 0;
   updatePauseMuteLabel();
@@ -952,10 +1165,12 @@ function enterPause() {
 function resumeGame() {
   hideAll();
   state = 'game';
+  if (musicEnabled) startMusic();
 }
 
 function enterGameOver() {
   state = 'gameover';
+  stopMusic();
   showOnly('screen-gameover');
   document.getElementById('go-score').textContent = fmtScore(score);
   document.getElementById('go-best').textContent  = fmtScore(hiScore);
@@ -1044,6 +1259,7 @@ function handleMainMenu(action) {
   if (action === 'play') startGame();
   else if (action === 'leaderboard') showLeaderboard(false);
   else if (action === 'howto') { state='howto'; showOnly('screen-howto'); }
+  else if (action === 'settings') openSettings();
 }
 function updatePauseMuteLabel() {
   const el = document.getElementById('pause-mute-item');
@@ -1093,6 +1309,9 @@ window.addEventListener('keydown', e => {
   if (state === 'howto' && (e.code === 'Escape' || e.code === 'Backspace')) {
     state='menu'; showOnly('screen-menu');
   }
+  if (state === 'settings' && (e.code === 'Escape' || e.code === 'Backspace')) {
+    closeSettings();
+  }
 });
 
 function updateNameDisplay() {
@@ -1128,14 +1347,19 @@ function drawBackground() {
 }
 
 function drawPlatforms() {
-  for (const p of PLATFORMS) {
-    if (!p.solid && p.w >= 64) { // gap (water area) — skip visual, water drawn below
-      continue;
+  for (const p of activePlatforms) {
+    if (!p.solid && p.w >= 64) continue; // water gap — skip, water drawn below
+    if (p.cloud) {
+      // Cloud platform — grey fluffy appearance
+      drawRect(p.x, p.y, p.w, p.h, C.cloud);
+      // Puff bumps on top
+      for (let cx = p.x + 4; cx < p.x + p.w - 4; cx += 12) {
+        drawRect(cx, p.y - 3, 10, 5, C.cloud);
+      }
+    } else {
+      drawRect(p.x, p.y,   p.w, 3,       C.green); // top surface (grass)
+      drawRect(p.x, p.y+3, p.w, p.h - 3, C.brown); // body (earth)
     }
-    // Top surface (grass green)
-    drawRect(p.x, p.y, p.w, 3, C.green);
-    // Body (earth brown)
-    drawRect(p.x, p.y+3, p.w, p.h-3, C.brown);
   }
 }
 
@@ -1274,6 +1498,21 @@ function drawEggs() {
 
 function drawFish() {
   for (const f of fishState) {
+    // Telegraph: fish peeks above water while warming up (timer 200–500ms)
+    if (f.state === 'idle' && f.timer > 200) {
+      const t = Math.min(1, (f.timer - 200) / 300); // 0→1 over 200–500ms
+      const peekY = WATER_Y - t * 7;               // rises up to 7px above water
+      ctx.save();
+      ctx.translate(f.x, peekY);
+      ctx.fillStyle = '#0088D0';
+      ctx.fillRect(-5, -4, 10, 4);  // top of head
+      ctx.fillStyle = C.white;
+      ctx.fillRect(1, -3, 2, 2);    // eye
+      ctx.fillStyle = C.black;
+      ctx.fillRect(1, -3, 1, 1);
+      ctx.restore();
+      continue;
+    }
     if (f.state === 'idle') continue;
     ctx.save();
     ctx.translate(f.x, f.y);
@@ -1370,6 +1609,7 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
   const delta = Math.min(timestamp - lastTimestamp, 50); // cap at 50ms to avoid spiral
   lastTimestamp = timestamp;
+  pollGamepad();
 
   ctx.clearRect(0,0,W,H);
   drawBackground();
@@ -1388,7 +1628,7 @@ function gameLoop(timestamp) {
     updateBonus(delta);
     clearJustPressed();
   } else if (state === 'pause' || state === 'gameover' || state === 'menu' ||
-             state === 'leaderboard' || state === 'howto') {
+             state === 'leaderboard' || state === 'howto' || state === 'settings') {
     clearJustPressed();
   }
 
@@ -1399,6 +1639,21 @@ function gameLoop(timestamp) {
     drawFish();
     drawPlayer();
     drawHUD();
+  }
+
+  // Gamepad toast (drawn over everything)
+  if (gpToast.timer > 0) {
+    gpToast.timer--;
+    const alpha = Math.min(1, gpToast.timer / 30);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(4, H - 18, W - 8, 14);
+    ctx.fillStyle = C.yellow;
+    ctx.font = '6px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(gpToast.text, W / 2, H - 7);
+    ctx.restore();
   }
 }
 
