@@ -142,13 +142,14 @@
     display: none;
     pointer-events: none;
     z-index: 5;
+    opacity: 0.6;
   }
   .touch-btn {
     position: absolute;
     bottom: 12px;
     pointer-events: all;
-    background: rgba(255,255,255,0.12);
-    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.25);
+    border: 2px solid rgba(255,255,255,0.5);
     border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
     font-size: 18px;
@@ -204,7 +205,12 @@
           <li data-action="resume" class="active">▶ RESUME</li>
           <li data-action="restart">↺ RESTART</li>
           <li data-action="menu">⌂ MAIN MENU</li>
+          <li data-action="mute" id="pause-mute-item">🔊 MUTE</li>
         </ul>
+        <p style="margin-top:14px;font-size:7px;color:var(--grey);line-height:2">
+          ← → MOVE &nbsp;·&nbsp; Z / SPACE FLAP<br>
+          P / ESC PAUSE &nbsp;·&nbsp; M MUTE
+        </p>
       </div>
     </div>
 
@@ -394,7 +400,7 @@ function setupTouch() {
   document.getElementById('touch-controls').style.display = 'block';
   const mkBtn = (id, prop) => {
     const el = document.getElementById(id);
-    el.addEventListener('touchstart', e => { e.preventDefault(); touch[prop]=true; el.classList.add('pressed'); }, {passive:false});
+    el.addEventListener('touchstart', e => { e.preventDefault(); initAudio(); touch[prop]=true; el.classList.add('pressed'); }, {passive:false});
     el.addEventListener('touchend',   e => { e.preventDefault(); touch[prop]=false; el.classList.remove('pressed'); }, {passive:false});
     el.addEventListener('touchcancel',e => { touch[prop]=false; el.classList.remove('pressed'); });
   };
@@ -403,12 +409,14 @@ function setupTouch() {
   mkBtn('btn-flap',  'flap');
 }
 setupTouch();
+document.addEventListener('click', initAudio, {once: true});
+document.addEventListener('touchstart', initAudio, {once: true, passive: true});
 
 // ═══════════════════════════════════════════════════════════════
 // AUDIO (Web Audio synthesis)
 // ═══════════════════════════════════════════════════════════════
 let audioCtx = null;
-let muted = false;
+let muted = localStorage.getItem('bfw_muted') === '1';
 
 function initAudio() {
   if (audioCtx) return;
@@ -490,6 +498,7 @@ let nameSlotActive = 0;
 let bonusTimer = 0;
 let bonusCaught = 0;
 let bonusTotal = 0;
+let perfectBonusAnnounce = 0; // countdown frames to show PERFECT BONUS text
 
 // ═══════════════════════════════════════════════════════════════
 // ENTITY HELPERS
@@ -570,7 +579,7 @@ function updatePlayer() {
   const mute  = isDown('MUTE');
 
   if (pause) { if(state === 'game') enterPause(); return; }
-  if (mute) { muted = !muted; }
+  if (mute) { muted = !muted; localStorage.setItem('bfw_muted', muted ? '1' : '0'); }
 
   if (left)  { player.vx = -PLAYER_SPEED; player.facing = -1; }
   else if (right) { player.vx = PLAYER_SPEED; player.facing = 1; }
@@ -630,11 +639,7 @@ function resolvePlatformsEnt(ent, hw, hh) {
     if (ex + hw < p.x || ex > p.x + p.w) continue;
     // Landing from above
     if (ent.vy >= 0 && (ey + hh - ent.vy) <= p.y + 2) {
-      ent.y = p.y + hh;
-      // wait: ent.y is foot → ent.y - hh is top
-      // foot is at ent.y, so ent.y - hh + hh = ent.y
-      // we want foot at p.y (top of platform):
-      ent.y = p.y;
+      ent.y = p.y; // foot lands on platform top
       ent.vy = 0;
       ent.onGround = true;
     }
@@ -701,7 +706,7 @@ function updateEnemies() {
     if (e.vy > TERMINAL_VEL) e.vy = TERMINAL_VEL;
 
     // Pursuit
-    const pursuitRadius = e.type === 'B' ? 100 : 150;
+    const pursuitRadius = e.type === 'B' ? 60 : 120;
     const dx = player.x - e.x;
     if (Math.abs(dx) < pursuitRadius) {
       e.vx += (dx > 0 ? 1 : -1) * 0.04 * speedMult;
@@ -774,7 +779,7 @@ function respawnPlayer() {
   player.flapCooldown = 0;
 }
 
-function updateEggs() {
+function updateEggs(delta) {
   for (let i = eggs.length - 1; i >= 0; i--) {
     const e = eggs[i];
     if (!e.onGround) {
@@ -782,7 +787,7 @@ function updateEggs() {
       e.y += e.vy;
       resolvePlatformsEnt(e, 10, 10);
     }
-    e.hatchTimer -= 16.67;
+    e.hatchTimer -= delta;
 
     // Player kick
     if (player.state !== 'dead' &&
@@ -808,15 +813,15 @@ function updateEggs() {
   }
 }
 
-function updateFish() {
+function updateFish(delta) {
   for (const f of fishState) {
     if (f.state === 'idle') {
       // Check if player hovering above column
       if (player.state !== 'dead' &&
           Math.abs(player.x - f.x) < 16 &&
           player.y > WATER_Y - 30) {
-        f.timer += 16.67;
-        if (f.timer > 600) {
+        f.timer += delta;
+        if (f.timer > 500) {
           f.state = 'lunge';
           f.timer = 0;
           SFX.fish();
@@ -824,7 +829,7 @@ function updateFish() {
       } else { f.timer = 0; }
     } else if (f.state === 'lunge') {
       f.y -= 3.5;
-      f.timer += 16.67;
+      f.timer += delta;
       // Kill player
       if (player.state !== 'dead' && player.state !== 'invincible' &&
           aabb(f.x-8, f.y-8, 16, 16, player.x-7, player.y-16, 14, 16)) {
@@ -862,7 +867,7 @@ function nextPhase() {
 
 function startBonus() {
   state = 'bonus';
-  bonusTimer = 3600; // 60s * 60fps
+  bonusTimer = 60000; // 60 seconds in ms
   bonusCaught = 0;
   bonusBalloons = [];
   bonusTotal = 12;
@@ -879,8 +884,8 @@ function startBonus() {
   }
 }
 
-function updateBonus() {
-  bonusTimer--;
+function updateBonus(delta) {
+  bonusTimer -= delta;
   for (let i = bonusBalloons.length - 1; i >= 0; i--) {
     const b = bonusBalloons[i];
     if (b.caught) continue;
@@ -901,6 +906,7 @@ function updateBonus() {
   if (bonusTimer <= 0 || allCaught) {
     if (allCaught) {
       addScore(5000); // PERFECT bonus
+      perfectBonusAnnounce = 180; // show text for 3 seconds
     }
     state = 'game';
     bonusBalloons = [];
@@ -939,6 +945,7 @@ function enterPause() {
   state = 'pause';
   showOnly('screen-pause');
   menuIdx = 0;
+  updatePauseMuteLabel();
   updateMenuHighlight('pause-menu');
 }
 
@@ -1038,11 +1045,21 @@ function handleMainMenu(action) {
   else if (action === 'leaderboard') showLeaderboard(false);
   else if (action === 'howto') { state='howto'; showOnly('screen-howto'); }
 }
+function updatePauseMuteLabel() {
+  const el = document.getElementById('pause-mute-item');
+  if (el) el.textContent = muted ? '🔇 UNMUTE' : '🔊 MUTE';
+}
+
 function handlePauseMenu(action) {
   SFX.menuBlip();
   if (action === 'resume') resumeGame();
   else if (action === 'restart') startGame();
   else if (action === 'menu') { state='menu'; showOnly('screen-menu'); }
+  else if (action === 'mute') {
+    muted = !muted;
+    localStorage.setItem('bfw_muted', muted ? '1' : '0');
+    updatePauseMuteLabel();
+  }
 }
 
 // Global keyboard handler for menus + name entry
@@ -1300,6 +1317,21 @@ function drawHUD() {
     ctx.fillRect(3 + i*10, 4, 4, 4);
   }
   ctx.textAlign = 'left';
+  // Perfect bonus announce
+  if (perfectBonusAnnounce > 0) {
+    perfectBonusAnnounce--;
+    const alpha = Math.min(1, perfectBonusAnnounce / 30);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.fillStyle = C.yellow;
+    ctx.textAlign = 'center';
+    ctx.fillText('PERFECT BONUS!', W/2, H/2 - 24);
+    ctx.fillStyle = C.green;
+    ctx.font = '7px monospace';
+    ctx.fillText('+5000 PTS', W/2, H/2 - 10);
+    ctx.restore();
+  }
   // Phase announce
   if (phaseAnnounce > 0) {
     phaseAnnounce--;
@@ -1317,7 +1349,7 @@ function drawHUD() {
     ctx.font = '6px monospace';
     ctx.fillStyle = C.yellow;
     ctx.textAlign = 'center';
-    ctx.fillText(`BONUS! ${bonusCaught}/${bonusTotal}  ${Math.ceil(bonusTimer/60)}s`, W/2, 20);
+    ctx.fillText(`BONUS! ${bonusCaught}/${bonusTotal}  ${Math.ceil(bonusTimer/1000)}s`, W/2, 20);
     ctx.textAlign = 'left';
     // Draw falling bonus balloons
     for (const b of bonusBalloons) {
@@ -1333,8 +1365,11 @@ function drawHUD() {
 // ═══════════════════════════════════════════════════════════════
 // MAIN GAME LOOP
 // ═══════════════════════════════════════════════════════════════
-function gameLoop() {
+let lastTimestamp = 0;
+function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
+  const delta = Math.min(timestamp - lastTimestamp, 50); // cap at 50ms to avoid spiral
+  lastTimestamp = timestamp;
 
   ctx.clearRect(0,0,W,H);
   drawBackground();
@@ -1345,12 +1380,12 @@ function gameLoop() {
   if (state === 'game') {
     updatePlayer();
     updateEnemies();
-    updateEggs();
-    updateFish();
+    updateEggs(delta);
+    updateFish(delta);
     checkPhaseComplete();
     clearJustPressed();
   } else if (state === 'bonus') {
-    updateBonus();
+    updateBonus(delta);
     clearJustPressed();
   } else if (state === 'pause' || state === 'gameover' || state === 'menu' ||
              state === 'leaderboard' || state === 'howto') {
