@@ -375,7 +375,7 @@ const PLATFORMS_CLASSIC = [
   // Classic NES layout (approximate pixel coords at 256x240)
   {x:0,   y:207, w:64,  h:6, solid:true},            // left ground
   {x:192, y:207, w:64,  h:6, solid:true},            // right ground
-  {x:64,  y:207, w:128, h:6, solid:false},           // centre ground gap (water below)
+  {x:64,  y:207, w:128, h:6, solid:false, water:true}, // centre ground gap (water below)
   {x:16,  y:152, w:80,  h:6, solid:false},           // left mid platform
   {x:160, y:152, w:80,  h:6, solid:false},           // right mid platform
   {x:80,  y:100, w:96,  h:6, solid:false, cloud:true}, // top mid cloud platform
@@ -387,7 +387,7 @@ const PLATFORMS_SPARSE = [
   // Sparse layout — narrower platforms, wider gaps; appears in phase 4+
   {x:0,   y:207, w:64,  h:6, solid:true},            // left ground
   {x:192, y:207, w:64,  h:6, solid:true},            // right ground
-  {x:64,  y:207, w:128, h:6, solid:false},           // centre ground gap (water below)
+  {x:64,  y:207, w:128, h:6, solid:false, water:true}, // centre ground gap (water below)
   {x:32,  y:160, w:56,  h:6, solid:false},           // left mid platform (narrower, higher)
   {x:168, y:160, w:56,  h:6, solid:false},           // right mid platform (narrower, higher)
   {x:96,  y:96,  w:64,  h:6, solid:false, cloud:true}, // top mid cloud (narrower)
@@ -1348,7 +1348,7 @@ function drawBackground() {
 
 function drawPlatforms() {
   for (const p of activePlatforms) {
-    if (!p.solid && p.w >= 64) continue; // water gap — skip, water drawn below
+    if (p.water) continue; // water gap — skip, water drawn separately
     if (p.cloud) {
       // Cloud platform — grey fluffy appearance
       drawRect(p.x, p.y, p.w, p.h, C.cloud);
