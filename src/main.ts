@@ -126,6 +126,6 @@ async function bootstrap(): Promise<void> {
   });
 }
 
-const COLORS_SKY = 0x6888FC;
+const COLORS_SKY = 0x000000;
 
 bootstrap().catch(console.error);
