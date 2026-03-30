@@ -1,0 +1,38 @@
+{
+  "layouts": [
+    {
+      "name": "classic",
+      "platforms": [
+        { "bounds": { "x": 0,   "y": 207, "width": 64,  "height": 33 }, "solid": "SOLID",    "passThrough": false },
+        { "bounds": { "x": 192, "y": 207, "width": 64,  "height": 33 }, "solid": "SOLID",    "passThrough": false },
+        { "bounds": { "x": 64,  "y": 207, "width": 128, "height": 6  }, "solid": "TOP_ONLY", "passThrough": false, "water": true },
+        { "bounds": { "x": 16,  "y": 152, "width": 80,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true  },
+        { "bounds": { "x": 160, "y": 152, "width": 80,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true  },
+        { "bounds": { "x": 80,  "y": 100, "width": 96,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true, "cloud": true },
+        { "bounds": { "x": 0,   "y": 50,  "width": 48,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true  },
+        { "bounds": { "x": 208, "y": 50,  "width": 48,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true  }
+      ]
+    },
+    {
+      "name": "sparse",
+      "platforms": [
+        { "bounds": { "x": 0,   "y": 207, "width": 64,  "height": 33 }, "solid": "SOLID",    "passThrough": false },
+        { "bounds": { "x": 192, "y": 207, "width": 64,  "height": 33 }, "solid": "SOLID",    "passThrough": false },
+        { "bounds": { "x": 64,  "y": 207, "width": 128, "height": 6  }, "solid": "TOP_ONLY", "passThrough": false, "water": true },
+        { "bounds": { "x": 32,  "y": 160, "width": 56,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true  },
+        { "bounds": { "x": 168, "y": 160, "width": 56,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true  },
+        { "bounds": { "x": 96,  "y": 96,  "width": 64,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true, "cloud": true },
+        { "bounds": { "x": 0,   "y": 42,  "width": 36,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true  },
+        { "bounds": { "x": 220, "y": 42,  "width": 36,  "height": 6  }, "solid": "TOP_ONLY", "passThrough": true  }
+      ]
+    }
+  ],
+  "phases": [
+    { "phase": 1, "layoutName": "classic", "enemies": [{ "type": "BALLOON_BIRD_A", "spawnX": 60,  "spawnY": 80 }, { "type": "BALLOON_BIRD_A", "spawnX": 180, "spawnY": 80 }], "hatchDelayMs": 3000, "bonusStage": false },
+    { "phase": 2, "layoutName": "classic", "enemies": [{ "type": "BALLOON_BIRD_A", "spawnX": 40,  "spawnY": 60 }, { "type": "BALLOON_BIRD_A", "spawnX": 120, "spawnY": 90 }, { "type": "BALLOON_BIRD_A", "spawnX": 200, "spawnY": 60 }], "hatchDelayMs": 2500, "bonusStage": false },
+    { "phase": 3, "layoutName": "classic", "enemies": [{ "type": "BALLOON_BIRD_A", "spawnX": 50,  "spawnY": 70 }, { "type": "BALLOON_BIRD_B", "spawnX": 180, "spawnY": 70 }, { "type": "BALLOON_BIRD_A", "spawnX": 120, "spawnY": 40 }], "hatchDelayMs": 2200, "bonusStage": false },
+    { "phase": 4, "layoutName": "sparse",  "enemies": [{ "type": "BALLOON_BIRD_B", "spawnX": 40,  "spawnY": 60 }, { "type": "BALLOON_BIRD_B", "spawnX": 200, "spawnY": 60 }, { "type": "BALLOON_BIRD_A", "spawnX": 128, "spawnY": 80 }, { "type": "SPARKY", "spawnX": 80, "spawnY": 153 }], "hatchDelayMs": 2000, "bonusStage": false },
+    { "phase": 5, "layoutName": "sparse",  "enemies": [{ "type": "BALLOON_BIRD_B", "spawnX": 30,  "spawnY": 50 }, { "type": "BALLOON_BIRD_B", "spawnX": 220, "spawnY": 50 }, { "type": "BALLOON_BIRD_B", "spawnX": 128, "spawnY": 30 }, { "type": "SPARKY", "spawnX": 160, "spawnY": 153 }], "hatchDelayMs": 1800, "bonusStage": false },
+    { "phase": 6, "layoutName": "sparse",  "enemies": [{ "type": "BALLOON_BIRD_B", "spawnX": 40,  "spawnY": 60 }, { "type": "BALLOON_BIRD_B", "spawnX": 90,  "spawnY": 40 }, { "type": "BALLOON_BIRD_B", "spawnX": 160, "spawnY": 40 }, { "type": "BALLOON_BIRD_B", "spawnX": 210, "spawnY": 60 }, { "type": "SPARKY", "spawnX": 40, "spawnY": 153 }, { "type": "SPARKY", "spawnX": 180, "spawnY": 153 }], "hatchDelayMs": 1600, "bonusStage": false }
+  ]
+}

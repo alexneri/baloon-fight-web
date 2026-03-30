@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192" shape-rendering="crispEdges">
+  <!-- Background -->
+  <rect width="192" height="192" fill="#0A0A1A"/>
+  <!-- Sky area -->
+  <rect width="192" height="140" fill="#6888FC"/>
+  <!-- Ground -->
+  <rect y="140" width="192" height="12" fill="#00A800"/>
+  <rect y="152" width="192" height="40" fill="#884000"/>
+  <!-- Water -->
+  <rect x="48" y="140" width="96" height="52" fill="#000088"/>
+  <rect x="48" y="140" width="96" height="8" fill="#3CBCFC"/>
+  <!-- Player body -->
+  <rect x="84" y="80" width="24" height="30" fill="#FCBCB0"/>
+  <!-- Player legs -->
+  <rect x="84" y="110" width="10" height="14" fill="#0000FC"/>
+  <rect x="98" y="110" width="10" height="14" fill="#0000FC"/>
+  <!-- Player hat -->
+  <rect x="82" y="72" width="28" height="10" fill="#0000A0"/>
+  <!-- Balloon string -->
+  <line x1="96" y1="80" x2="96" y2="58" stroke="#BCBCBC" stroke-width="2"/>
+  <!-- Balloon -->
+  <rect x="79" y="34" width="34" height="28" fill="#F8B800"/>
+  <rect x="82" y="37" width="12" height="10" fill="rgba(255,255,255,0.4)"/>
+</svg>
