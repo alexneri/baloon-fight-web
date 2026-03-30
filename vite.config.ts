@@ -13,7 +13,7 @@ export default defineConfig({
     outDir: 'dist',
     target: 'es2022',
     rollupOptions: {
-      input: resolve(__dirname, 'game.html'),
+      input: resolve(__dirname, 'index.html'),
     },
   },
   test: {
