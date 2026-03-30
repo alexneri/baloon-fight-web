@@ -1,0 +1,14 @@
+name = "balloon-fight-api"
+main = "worker/index.ts"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "SCORES_KV"
+id = "YOUR_KV_NAMESPACE_ID"
+
+[env.staging]
+name = "balloon-fight-api-staging"
+
+[[env.staging.kv_namespaces]]
+binding = "SCORES_KV"
+id = "YOUR_STAGING_KV_NAMESPACE_ID"

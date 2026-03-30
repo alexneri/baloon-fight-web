@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "image": "sprites.png",
+    "format": "RGBA8888",
+    "size": { "w": 1, "h": 1 },
+    "scale": 1
+  },
+  "frames": {}
+}
